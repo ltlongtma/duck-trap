@@ -31,10 +31,26 @@ Hỗ trợ **macOS** và **Windows**.
    Không có thì nó tự chụp desktop hoặc vẽ desktop giả.
 4. **Double-click để chạy.** Sau vài giây là bẫy vũ trang âm thầm.
    - Lần đầu, máy sẽ hỏi quyền **Camera** → bấm **Allow / Cho phép**.
-   - Windows SmartScreen có thể cảnh báo "app lạ" → *More info → Run anyway*.
 
 > Gợi ý ảnh mồi: chụp màn hình desktop của mày (macOS `⌘⇧3`, Windows `Win+Shift+S`)
 > rồi đổi tên thành `trap.png` đặt cạnh app cho giống thật.
+
+### Mở app lần đầu (app chưa ký số — bình thường với app nội bộ)
+
+**Windows** — SmartScreen báo "Windows protected your PC":
+*More info → Run anyway*.
+
+**macOS** — Gatekeeper báo *"Apple could not verify DuckTrap..."*. App vẫn an
+toàn, chỉ chưa mua chứng chỉ ký số. Mở bằng 1 trong 2 cách:
+
+- **Qua System Settings**: bấm **Done** (đừng Move to Trash) → mở
+  **System Settings → Privacy & Security** → kéo xuống mục Security thấy dòng
+  *"DuckTrap was blocked…"* → **Open Anyway** → xác nhận. Lần sau mở bình thường.
+- **Qua Terminal (1 lệnh)** — gỡ cờ quarantine macOS gắn cho file tải về:
+  ```bash
+  xattr -dr com.apple.quarantine ~/Downloads/DuckTrap.app
+  ```
+  (Đổi đường dẫn cho đúng chỗ để `.app`.) Xong double-click chạy bình thường.
 
 ---
 
