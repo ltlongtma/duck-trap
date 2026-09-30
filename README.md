@@ -157,9 +157,9 @@ in `dist/`.
 ## How it works
 
 - **Decoy**: prefers your image (`--image` / `trap.png`), then the bundled
-  default (`duck_trap/assets/default_decoy.png`, regenerate with
-  `python tools/make_default_decoy.py`), then a desktop screenshot, then a drawn
-  fake desktop — shown full-screen via Tkinter.
+  default (`duck_trap/assets/default_decoy.png` — replace it to change the
+  default; `tools/make_default_decoy.py` can generate a synthetic one), then a
+  live desktop screenshot, then a drawn fake desktop — shown full-screen via Tkinter.
 - **Detection**: binds Tk `<Key>` / `<Button>` / `<Motion>` on the focused
   fullscreen window (no special permission). `--global-hook` adds `pynput`.
 - **Capture**: OpenCV, or `imagesnap` by camera name on macOS. Taken *before*
