@@ -4,10 +4,19 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# Duck Trap cần tkinter (GUI). Một số bản Python (vd Homebrew python@3.14)
-# KHÔNG kèm tkinter, nên ta đi tìm bản Python nào có sẵn tkinter.
+# Duck Trap cần tkinter (GUI) với Tk >= 8.6.
+#  - Homebrew python@3.14 KHÔNG kèm tkinter -> loại.
+#  - Python 3.9 hệ thống của macOS dùng Tk 8.5 CŨ (fullscreen lỗi) -> loại.
+# Nên ta tìm bản Python có tkinter và Tk >= 8.6.
 has_tk() {
-  "$1" -c "import tkinter" >/dev/null 2>&1
+  "$1" - >/dev/null 2>&1 <<'PY'
+import sys, tkinter
+r = tkinter.Tk(); r.withdraw()
+v = r.tk.call("info", "patchlevel")
+r.destroy()
+major, minor = (int(x) for x in v.split(".")[:2])
+sys.exit(0 if (major, minor) >= (8, 6) else 1)
+PY
 }
 
 find_python() {

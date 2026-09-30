@@ -45,6 +45,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Ngưỡng di chuột (pixel) để tính là bị chạm. Nhỏ = nhạy hơn.",
     )
     p.add_argument(
+        "--global-hook", action="store_true",
+        help="Bật thêm global input hook (pynput) để bắt cả khi cửa sổ không "
+             "có focus. Cần quyền Accessibility + Input Monitoring.",
+    )
+    p.add_argument(
         "--no-lock", action="store_true",
         help="Chỉ chụp ảnh, KHÔNG tự khoá máy (dùng để test).",
     )
@@ -86,6 +91,8 @@ def main(argv: list[str] | None = None) -> int:
         cfg.camera_name = args.camera_name
     if args.sensitivity is not None:
         cfg.mouse_move_threshold = args.sensitivity
+    if args.global_hook:
+        cfg.use_global_hook = True
     if args.no_lock:
         cfg.auto_lock = False
     if args.no_sound:

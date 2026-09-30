@@ -88,8 +88,12 @@ def grab_desktop_screenshot(dest: Path) -> Optional[Path]:
     if sys.platform != "darwin":
         return None
     try:
-        # -x: không phát tiếng chụp màn hình
-        subprocess.run(["screencapture", "-x", str(dest)], check=True, timeout=10)
+        # -x: không phát tiếng chụp màn hình. Nuốt stderr để khỏi rác terminal
+        # khi thiếu quyền Screen Recording (khi đó trả None -> dùng desktop giả).
+        subprocess.run(
+            ["screencapture", "-x", str(dest)],
+            check=True, timeout=10, capture_output=True,
+        )
         return dest if dest.exists() else None
     except (subprocess.SubprocessError, OSError):
         return None

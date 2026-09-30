@@ -38,6 +38,11 @@ class Config:
     # (nhiều webcam cần vài frame để tự chỉnh sáng)
     camera_warmup_frames: int = 5
 
+    # Bật thêm global hook (pynput) để bắt input cả khi cửa sổ không có focus.
+    # Cần quyền Accessibility + Input Monitoring. Mặc định tắt vì Tk-events
+    # trên cửa sổ fullscreen đã đủ và không cần cấp quyền.
+    use_global_hook: bool = False
+
     # Có tự khoá máy sau khi chụp không
     auto_lock: bool = True
 

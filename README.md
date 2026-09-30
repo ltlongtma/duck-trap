@@ -60,16 +60,21 @@ DUCKTRAP_PYTHON=/usr/bin/python3 ./run.sh
 
 ## Quyền cần cấp trên macOS (quan trọng)
 
-macOS chặn theo dõi bàn phím và camera cho tới khi mày cấp quyền. Mở
-**System Settings → Privacy & Security** và cấp cho ứng dụng chạy Python
-(thường là **Terminal** hoặc **iTerm**) các quyền:
+Mặc định Duck Trap phát hiện chạm bằng **event của Tkinter** trên cửa sổ
+fullscreen đang giữ focus, nên **chỉ cần đúng 1 quyền: Camera**.
 
-- **Camera** — để chụp ảnh thủ phạm.
-- **Input Monitoring** — để bắt phím/touchpad kể cả khi cửa sổ không có focus.
-- **Accessibility** — để lệnh khoá máy (AppleScript fallback) hoạt động.
-- **Screen Recording** — *chỉ cần* nếu muốn dùng ảnh mồi = screenshot desktop
-  tự động. Không cấp thì màn hình mồi sẽ xám/trống — khi đó dùng `--image` để
-  tự đưa ảnh mồi (không cần quyền này).
+Mở **System Settings → Privacy & Security** và cấp cho ứng dụng chạy Python
+(thường là **Terminal** hoặc **iTerm**):
+
+- **Camera** *(bắt buộc)* — để chụp ảnh thủ phạm. Lần đầu macOS sẽ tự hỏi.
+
+Các quyền dưới đây **không bắt buộc**, chỉ cần khi dùng tính năng thêm:
+
+- **Accessibility + Input Monitoring** — chỉ khi chạy `--global-hook` (bắt
+  input cả khi cửa sổ không có focus). Không cấp thì cứ dùng mặc định.
+- **Screen Recording** — chỉ khi muốn ảnh mồi = screenshot desktop tự động.
+  Không cấp thì màn hình mồi sẽ xám/trống — **dùng `--image` để tự đưa ảnh mồi**
+  (không cần quyền này).
 
 Lần đầu chạy, macOS thường tự hỏi. Nếu bị từ chối nhầm, vào Settings bật lại
 rồi chạy lại.
@@ -87,6 +92,7 @@ python -m duck_trap [tuỳ chọn]
 | `--image <đường dẫn>`          | **Ảnh mồi tự chọn** hiện full màn hình (PNG/JPG).           |
 | `--camera-name "FaceTime HD Camera"` | Chọn camera **theo tên** (tránh vớ nhầm iPhone).      |
 | `--list-cameras`               | Liệt kê tên các camera rồi thoát.                           |
+| `--global-hook`                | Bật bắt input toàn cục (pynput). Cần Accessibility + Input Monitoring. |
 | `--no-lock`                    | Chỉ chụp ảnh, **không** khoá máy (dùng để test cho an toàn). |
 | `--no-sound`                   | Không phát tiếng khi sập bẫy.                               |
 | `--open-folder`                | Tự mở thư mục ảnh sau khi sập bẫy.                          |

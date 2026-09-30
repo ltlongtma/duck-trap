@@ -57,17 +57,21 @@ class DuckTrapApp:
         self.root.mainloop()
 
     def _go_fullscreen(self) -> None:
-        # Che kín màn hình, bỏ thanh tiêu đề. Dùng cả overrideredirect +
-        # geometry (đáng tin trên macOS) lẫn -fullscreen.
-        self.root.overrideredirect(True)
+        # Native fullscreen (Tk 8.6): cửa sổ vẫn là "key window" nên nhận được
+        # sự kiện bàn phím -> Tk-events bắt được phím mà không cần quyền gì.
+        # (KHÔNG dùng overrideredirect vì trên macOS nó chặn nhận phím.)
         self.root.geometry(f"{self._screen_w}x{self._screen_h}+0+0")
-        try:
-            self.root.attributes("-fullscreen", True)
-        except tk.TclError:
-            pass
         self.root.attributes("-topmost", True)
         try:
             self.root.config(cursor="none")
+        except tk.TclError:
+            pass
+        # Áp -fullscreen sau khi cửa sổ đã hiển thị để chắc chắn ăn.
+        self.root.after(60, self._engage_fullscreen)
+
+    def _engage_fullscreen(self) -> None:
+        try:
+            self.root.attributes("-fullscreen", True)
         except tk.TclError:
             pass
         self.root.lift()
@@ -134,34 +138,49 @@ class DuckTrapApp:
         return (self.root.winfo_pointerx(), self.root.winfo_pointery())
 
     def _start_input_listener(self) -> None:
+        # LUÔN bind event của Tkinter: cửa sổ đang fullscreen + giữ focus nên
+        # mọi phím/chuột/touchpad hướng vào máy đều được bắt, KHÔNG cần cấp
+        # quyền Accessibility. Đây là lớp phát hiện chính.
+        self.root.bind_all("<Key>", lambda e: self._trigger("phím bấm"))
+        self.root.bind_all("<Button>", lambda e: self._trigger("chuột/touchpad"))
+        self.root.bind_all("<Motion>", self._tk_motion)
+
+        # Tùy chọn: bật thêm global hook (pynput) để bắt cả khi không có focus.
+        # Cần quyền Accessibility + Input Monitoring; nếu chưa cấp sẽ báo lỗi,
+        # ta nuốt gọn và vẫn chạy bằng Tk-events ở trên.
+        if self.cfg.use_global_hook:
+            self._start_global_hook()
+
+    def _start_global_hook(self) -> None:
         try:
             from pynput import keyboard, mouse  # type: ignore
         except ImportError:
-            # Không có pynput: dựa vào sự kiện Tk (kém nhạy hơn với touchpad
-            # khi cửa sổ không giữ focus, nhưng vẫn bắt được phím/click).
-            self.root.bind_all("<Key>", lambda e: self._trigger("phím bấm"))
-            self.root.bind_all("<Button>", lambda e: self._trigger("chuột/touchpad"))
-            self.root.bind_all("<Motion>", self._tk_motion)
+            print("[Duck Trap] Không có pynput; dùng Tk-events.")
             return
 
         def on_key(_key):
-            self._trigger("phím bấm")
+            self._trigger("phím bấm (global)")
 
         def on_click(_x, _y, _button, pressed):
             if pressed:
-                self._trigger("click chuột/touchpad")
+                self._trigger("click (global)")
 
         def on_move(x, y):
             if self._baseline_pointer is None:
                 return
             bx, by = self._baseline_pointer
             if abs(x - bx) + abs(y - by) >= self.cfg.mouse_move_threshold:
-                self._trigger("di chuột/touchpad")
+                self._trigger("di chuột (global)")
 
-        self._kb_listener = keyboard.Listener(on_press=on_key)
-        self._ms_listener = mouse.Listener(on_click=on_click, on_move=on_move)
-        self._kb_listener.start()
-        self._ms_listener.start()
+        try:
+            self._kb_listener = keyboard.Listener(on_press=on_key)
+            self._ms_listener = mouse.Listener(on_click=on_click, on_move=on_move)
+            self._kb_listener.start()
+            self._ms_listener.start()
+        except Exception as exc:  # noqa: BLE001 - permission/backend lỗi đủ kiểu
+            print(f"[Duck Trap] Global hook không bật được ({exc}). "
+                  "Cần cấp quyền Accessibility + Input Monitoring. "
+                  "Vẫn chạy bằng Tk-events.")
 
     def _tk_motion(self, event) -> None:
         if self._baseline_pointer is None:
