@@ -181,6 +181,9 @@ in `dist/`.
   swallowed by the OS and never arrive as key/mouse events, so Duck Trap also
   fires on `<Deactivate>` / `<FocusOut>` — any attempt to leave the trap
   counts as a trigger and locks the machine.
+- **Stay-awake**: while armed it holds the display on (macOS `caffeinate`,
+  Windows `SetThreadExecutionState`) so the screensaver / display sleep doesn't
+  deactivate the window and cause a false trigger while you're away.
 - **Capture**: OpenCV, or `imagesnap` by camera name on macOS. Taken *before*
   locking.
 - **Lock (silent)**: macOS tries CGSession → `pmset displaysleepnow` →

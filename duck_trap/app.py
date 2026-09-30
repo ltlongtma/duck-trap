@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import threading
+import time
 import tkinter as tk
 from pathlib import Path
 from typing import Optional
@@ -26,6 +27,8 @@ class DuckTrapApp:
         self._baseline_pointer: Optional[tuple[int, int]] = None
         self._decoy_image = None  # keep a ref so it is not garbage-collected
         self._listener = None
+        self._armed_at: float = 0.0
+        self._keep_awake = sysact.KeepAwake()
 
         self._screen_w = self.root.winfo_screenwidth()
         self._screen_h = self.root.winfo_screenheight()
@@ -83,8 +86,12 @@ class DuckTrapApp:
         self.root.lift()
         self.root.focus_force()
         self.root.update_idletasks()
+        # Keep the display awake so idle screensaver/sleep does not deactivate
+        # the window and cause a false trigger while the owner is away.
+        self._keep_awake.start()
         self._baseline_pointer = self._pointer_now()
         self._start_input_listener()
+        self._armed_at = time.monotonic()
         self._armed = True
 
     def _show_decoy(self) -> None:
@@ -138,9 +145,10 @@ class DuckTrapApp:
         # swipe up), switching Spaces (swipe left/right) and Cmd+Tab are
         # swallowed by the system, so they never arrive as key/mouse events --
         # instead our window loses focus / the app is deactivated. Treat that as
-        # someone trying to get out: snap + lock.
-        self.root.bind("<Deactivate>", lambda e: self._trigger("app switch / Mission Control"))
-        self.root.bind("<FocusOut>", lambda e: self._trigger("lost focus"))
+        # someone trying to get out: snap + lock. (Idle screensaver/sleep is
+        # prevented via KeepAwake, so these only fire from real user action.)
+        self.root.bind("<Deactivate>", lambda e: self._trigger_on_leave("app switch / Mission Control"))
+        self.root.bind("<FocusOut>", lambda e: self._trigger_on_leave("lost focus"))
 
         # Optional: also start a global hook (pynput) to catch input even without
         # focus. Needs Accessibility + Input Monitoring; if not granted it errors,
@@ -188,6 +196,13 @@ class DuckTrapApp:
 
     # ---- response when the trap fires --------------------------------
 
+    def _trigger_on_leave(self, reason: str) -> None:
+        # Ignore focus/deactivate events for a brief warmup after arming, in case
+        # the fullscreen/focus transition emits a stray one.
+        if not self._armed or (time.monotonic() - self._armed_at) < 1.5:
+            return
+        self._trigger(reason)
+
     def _trigger(self, reason: str) -> None:
         with self._lock:
             if not self._armed or self._fired:
@@ -219,6 +234,7 @@ class DuckTrapApp:
         self.root.after(0, self._finish, photo)
 
     def _finish(self, photo: Optional[Path]) -> None:
+        self._keep_awake.stop()
         if self.cfg.auto_lock:
             sysact.lock_screen()
         if self.cfg.open_folder_after and photo is not None:
@@ -239,6 +255,7 @@ class DuckTrapApp:
     def _abort(self) -> None:
         if self._armed:
             return  # once armed, ESC will not save the intruder :)
+        self._keep_awake.stop()
         self._stop_listeners()
         try:
             self.root.destroy()

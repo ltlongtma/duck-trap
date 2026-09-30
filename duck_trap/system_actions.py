@@ -75,6 +75,55 @@ def lock_screen() -> bool:
     return False
 
 
+class KeepAwake:
+    """Keep the display on and stop the screensaver while the trap is armed, so
+    idle sleep/screensaver does not deactivate the window and cause a false
+    trigger. Call stop() to release."""
+
+    def __init__(self):
+        self._proc = None       # macOS caffeinate process
+        self._win_set = False   # Windows execution-state flag
+
+    def start(self) -> None:
+        if sys.platform == "darwin":
+            try:
+                # -d prevent display sleep, -i idle sleep, -m disk, -s system,
+                # -u mark user active (also suppresses the screensaver).
+                self._proc = subprocess.Popen(
+                    ["caffeinate", "-dimsu"],
+                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                )
+            except OSError:
+                self._proc = None
+        elif sys.platform == "win32":
+            try:
+                import ctypes
+
+                # ES_CONTINUOUS | ES_DISPLAY_REQUIRED | ES_SYSTEM_REQUIRED
+                ctypes.windll.kernel32.SetThreadExecutionState(
+                    0x80000000 | 0x00000002 | 0x00000001
+                )
+                self._win_set = True
+            except (OSError, AttributeError):
+                self._win_set = False
+
+    def stop(self) -> None:
+        if self._proc is not None:
+            try:
+                self._proc.terminate()
+            except OSError:
+                pass
+            self._proc = None
+        if self._win_set:
+            try:
+                import ctypes
+
+                ctypes.windll.kernel32.SetThreadExecutionState(0x80000000)  # ES_CONTINUOUS
+            except (OSError, AttributeError):
+                pass
+            self._win_set = False
+
+
 def play_alarm() -> None:
     """Play a short sound so the trap firing is audible. Non-blocking."""
     try:
