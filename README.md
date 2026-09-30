@@ -23,28 +23,39 @@ Works on **macOS** and **Windows**.
 
 ## Quick start
 
-**Run from source (macOS), one command that just works:**
+**Run from source (macOS). No arguments needed — it works out of the box:**
 
 ```bash
-./run.sh --image ~/Desktop/trap-image.png --camera-name "MacBook Pro Camera"
+./run.sh
 ```
 
-- `--image` — the picture shown full-screen (use a screenshot of your desktop
-  so it looks real; take one with `⌘⇧3`).
-- `--camera-name` — pick your built-in camera so it doesn't grab your iPhone
-  (Continuity Camera). Run `./run.sh --list-cameras` to see the exact names.
-
-The first run creates a virtualenv and installs dependencies automatically.
-After launch there's a short silent grace period to step away (press **ESC** to
-cancel). Then it's armed.
+The first run creates a virtualenv and installs dependencies automatically. It
+uses the bundled default decoy and the default camera. After launch there's a
+short silent grace period to step away (press **ESC** to cancel). Then it's armed.
 
 **Test safely first (capture but don't lock):**
 
 ```bash
-./run.sh --image ~/Desktop/trap-image.png --no-lock --open-folder
+./run.sh --no-lock --open-folder
 ```
 
 Tap a key to "spring" the trap, then check the photo in the folder that opens.
+
+### Optional flags (all placeholders — change the values)
+
+```bash
+# Use your own decoy image instead of the bundled one:
+./run.sh --image ~/Desktop/my-screenshot.png
+
+# Pick a specific camera (macOS often defaults to the iPhone camera).
+# First list the exact names on YOUR machine:
+./run.sh --list-cameras
+# then pass the one you want, e.g.:
+./run.sh --camera-name "FaceTime HD Camera"
+```
+
+`~/Desktop/my-screenshot.png` and `"FaceTime HD Camera"` are just examples —
+use whatever path and camera name your machine reports.
 
 ---
 
