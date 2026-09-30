@@ -24,8 +24,21 @@ def build_parser() -> argparse.ArgumentParser:
         help="Số giây đếm ngược trước khi vũ trang (mặc định 4).",
     )
     p.add_argument(
+        "--image", type=Path, default=None,
+        help="Ảnh mồi tự chọn để hiển thị full màn hình (PNG/JPG).",
+    )
+    p.add_argument(
         "--camera", type=int, default=None,
         help="Index webcam (mặc định 0).",
+    )
+    p.add_argument(
+        "--camera-name", type=str, default=None,
+        help='Tên camera macOS, vd "FaceTime HD Camera", để tránh vớ nhầm '
+             "camera iPhone (Continuity Camera). Ưu tiên hơn --camera.",
+    )
+    p.add_argument(
+        "--list-cameras", action="store_true",
+        help="Liệt kê tên các camera rồi thoát (cần imagesnap).",
     )
     p.add_argument(
         "--sensitivity", type=int, default=None,
@@ -49,13 +62,28 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
 
+    if args.list_cameras:
+        from .camera import list_cameras
+        cams = list_cameras()
+        if cams:
+            print("Camera tìm thấy (dùng với --camera-name \"<tên>\"):")
+            for name in cams:
+                print(f"  • {name}")
+        else:
+            print("Không liệt kê được camera. Cài imagesnap: brew install imagesnap")
+        return 0
+
     cfg = Config.from_env()
     if args.dir is not None:
         cfg.capture_dir = args.dir.expanduser()
+    if args.image is not None:
+        cfg.decoy_image_path = args.image.expanduser()
     if args.arm_delay is not None:
         cfg.arm_delay = args.arm_delay
     if args.camera is not None:
         cfg.camera_index = args.camera
+    if args.camera_name is not None:
+        cfg.camera_name = args.camera_name
     if args.sensitivity is not None:
         cfg.mouse_move_threshold = args.sensitivity
     if args.no_lock:
@@ -67,9 +95,22 @@ def main(argv: list[str] | None = None) -> int:
 
     cfg.capture_dir.mkdir(parents=True, exist_ok=True)
 
+    if cfg.decoy_image_path and not cfg.decoy_image_path.exists():
+        print(f"[Duck Trap] ⚠️  Không thấy ảnh mồi: {cfg.decoy_image_path}")
+        print("            Sẽ dùng screenshot desktop / desktop giả thay thế.")
+
+    if cfg.decoy_image_path and cfg.decoy_image_path.exists():
+        decoy_src = str(cfg.decoy_image_path)
+    else:
+        decoy_src = "screenshot desktop (cần quyền Screen Recording)"
+
+    cam_src = cfg.camera_name or f"index {cfg.camera_index}"
+
     print("=" * 56)
     print(" 🦆  DUCK TRAP đang vũ trang…")
-    print(f"     Ảnh sẽ lưu tại: {cfg.capture_dir}")
+    print(f"     Ảnh mồi:     {decoy_src}")
+    print(f"     Camera:      {cam_src}")
+    print(f"     Ảnh lưu tại: {cfg.capture_dir}")
     print(f"     Tự khoá máy: {'CÓ' if cfg.auto_lock else 'KHÔNG'}")
     print("     Nhấn ESC trong lúc đếm ngược để huỷ.")
     print("=" * 56)

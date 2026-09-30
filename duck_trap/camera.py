@@ -44,31 +44,63 @@ def _capture_opencv(path: Path, camera_index: int, warmup_frames: int) -> bool:
         cam.release()
 
 
-def _capture_imagesnap(path: Path) -> bool:
-    """Fallback macOS: brew install imagesnap."""
+def _capture_imagesnap(path: Path, device_name: Optional[str] = None) -> bool:
+    """macOS: brew install imagesnap. Chọn camera theo tên nếu có."""
     exe = shutil.which("imagesnap")
     if not exe:
         return False
+    cmd = [exe, "-w", "1"]  # -w: chờ camera chỉnh sáng ~1s cho ảnh không tối
+    if device_name:
+        cmd += ["-d", device_name]
+    cmd.append(str(path))
     try:
-        # -w: chờ camera chỉnh sáng ~1s cho ảnh không tối thui
-        subprocess.run(
-            [exe, "-w", "1", str(path)],
-            check=True,
-            capture_output=True,
-            timeout=15,
-        )
+        subprocess.run(cmd, check=True, capture_output=True, timeout=20)
         return path.exists()
     except (subprocess.SubprocessError, OSError):
         return False
+
+
+def list_cameras() -> list[str]:
+    """Liệt kê tên các camera macOS qua imagesnap (nếu có)."""
+    exe = shutil.which("imagesnap")
+    if not exe:
+        return []
+    try:
+        out = subprocess.run(
+            [exe, "-l"], capture_output=True, text=True, timeout=15
+        ).stdout
+    except (subprocess.SubprocessError, OSError):
+        return []
+    names: list[str] = []
+    for line in out.splitlines():
+        line = line.strip()
+        # imagesnap in dạng: "=> FaceTime HD Camera" hoặc "FaceTime HD Camera"
+        if not line or line.lower().startswith("video devices"):
+            continue
+        names.append(line.lstrip("=> ").strip())
+    return names
 
 
 def capture_snapshot(
     capture_dir: Path,
     camera_index: int = 0,
     warmup_frames: int = 5,
+    camera_name: Optional[str] = None,
 ) -> Optional[Path]:
-    """Chụp 1 ảnh, trả về đường dẫn nếu thành công, None nếu thất bại."""
+    """Chụp 1 ảnh, trả về đường dẫn nếu thành công, None nếu thất bại.
+
+    Nếu chỉ định camera_name (macOS) thì ưu tiên chụp bằng imagesnap theo
+    tên đó để tránh bị vớ nhầm camera iPhone (Continuity Camera).
+    """
     path = _timestamped_path(capture_dir)
+
+    if camera_name:
+        if _capture_imagesnap(path, device_name=camera_name):
+            return path
+        # imagesnap fail -> vẫn thử OpenCV theo index cho chắc
+        if _capture_opencv(path, camera_index, warmup_frames):
+            return path
+        return None
 
     if _capture_opencv(path, camera_index, warmup_frames):
         return path

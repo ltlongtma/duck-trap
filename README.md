@@ -67,6 +67,9 @@ macOS chặn theo dõi bàn phím và camera cho tới khi mày cấp quyền. M
 - **Camera** — để chụp ảnh thủ phạm.
 - **Input Monitoring** — để bắt phím/touchpad kể cả khi cửa sổ không có focus.
 - **Accessibility** — để lệnh khoá máy (AppleScript fallback) hoạt động.
+- **Screen Recording** — *chỉ cần* nếu muốn dùng ảnh mồi = screenshot desktop
+  tự động. Không cấp thì màn hình mồi sẽ xám/trống — khi đó dùng `--image` để
+  tự đưa ảnh mồi (không cần quyền này).
 
 Lần đầu chạy, macOS thường tự hỏi. Nếu bị từ chối nhầm, vào Settings bật lại
 rồi chạy lại.
@@ -79,15 +82,42 @@ rồi chạy lại.
 python -m duck_trap [tuỳ chọn]
 ```
 
-| Tuỳ chọn            | Ý nghĩa                                                        |
-|---------------------|----------------------------------------------------------------|
-| `--no-lock`         | Chỉ chụp ảnh, **không** khoá máy (dùng để test cho an toàn).    |
-| `--no-sound`        | Không phát tiếng khi sập bẫy.                                   |
-| `--open-folder`     | Tự mở thư mục ảnh sau khi sập bẫy.                              |
-| `--arm-delay 6`     | Đổi thời gian đếm ngược (giây).                                 |
-| `--camera 1`        | Chọn webcam khác (nếu có nhiều camera).                         |
-| `--sensitivity 3`   | Ngưỡng di chuột (pixel) tính là bị chạm. Nhỏ hơn = nhạy hơn.    |
-| `--dir <đường dẫn>` | Đổi thư mục lưu ảnh.                                            |
+| Tuỳ chọn                       | Ý nghĩa                                                     |
+|--------------------------------|-------------------------------------------------------------|
+| `--image <đường dẫn>`          | **Ảnh mồi tự chọn** hiện full màn hình (PNG/JPG).           |
+| `--camera-name "FaceTime HD Camera"` | Chọn camera **theo tên** (tránh vớ nhầm iPhone).      |
+| `--list-cameras`               | Liệt kê tên các camera rồi thoát.                           |
+| `--no-lock`                    | Chỉ chụp ảnh, **không** khoá máy (dùng để test cho an toàn). |
+| `--no-sound`                   | Không phát tiếng khi sập bẫy.                               |
+| `--open-folder`                | Tự mở thư mục ảnh sau khi sập bẫy.                          |
+| `--arm-delay 6`                | Đổi thời gian đếm ngược (giây).                             |
+| `--camera 1`                   | Chọn webcam theo index (nếu không dùng `--camera-name`).    |
+| `--sensitivity 3`              | Ngưỡng di chuột (pixel) tính là bị chạm. Nhỏ hơn = nhạy hơn. |
+| `--dir <đường dẫn>`            | Đổi thư mục lưu ảnh.                                        |
+
+### Dùng ảnh mồi của riêng mày
+
+Màn hình xám / trống là do `screencapture` bị macOS chặn (thiếu quyền
+**Screen Recording**). Cách chắc ăn nhất là **tự đưa ảnh mồi**:
+
+```bash
+./run.sh --image ~/Desktop/anh_man_hinh_gia.png
+```
+
+Gợi ý: chụp màn hình desktop của mày (⌘⇧3) rồi truyền file đó vào `--image`
+để trông y như máy đang mở.
+
+### Chọn đúng camera (tránh camera iPhone)
+
+macOS hay tự lấy **Continuity Camera** (iPhone) làm camera mặc định. Liệt kê
+rồi chọn camera laptop theo tên:
+
+```bash
+./run.sh --list-cameras
+./run.sh --camera-name "FaceTime HD Camera"
+```
+
+(Cần `brew install imagesnap` để chọn theo tên.)
 
 **Khuyến nghị test lần đầu:**
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 
 DEFAULT_CAPTURE_DIR = Path.home() / "DuckTrap" / "captures"
@@ -15,6 +16,10 @@ class Config:
     # Thư mục lưu ảnh thủ phạm
     capture_dir: Path = DEFAULT_CAPTURE_DIR
 
+    # Ảnh mồi hiển thị full màn hình (do mày tự chọn). Nếu None -> thử
+    # chụp screenshot desktop; nếu vẫn không được -> vẽ desktop giả.
+    decoy_image_path: Optional[Path] = None
+
     # Số giây đếm ngược sau khi bấm "arm" để mày kịp rời tay khỏi máy
     arm_delay: float = 4.0
 
@@ -22,8 +27,12 @@ class Config:
     # rung tay / trôi cảm biến gây báo giả. Đặt 0 để nhạy tuyệt đối.
     mouse_move_threshold: int = 8
 
-    # Index của webcam (0 = camera mặc định)
+    # Index của webcam (0 = camera mặc định). Dùng khi chụp bằng OpenCV.
     camera_index: int = 0
+
+    # Tên camera (macOS, qua imagesnap). Vd "FaceTime HD Camera" để tránh
+    # bị vớ nhầm camera iPhone (Continuity Camera). Ưu tiên hơn camera_index.
+    camera_name: Optional[str] = None
 
     # Số frame "khởi động" webcam bỏ đi trước khi lấy ảnh thật
     # (nhiều webcam cần vài frame để tự chỉnh sáng)
@@ -48,6 +57,10 @@ class Config:
             cfg.arm_delay = float(v)
         if v := os.environ.get("DUCKTRAP_CAMERA_INDEX"):
             cfg.camera_index = int(v)
+        if v := os.environ.get("DUCKTRAP_CAMERA_NAME"):
+            cfg.camera_name = v
+        if v := os.environ.get("DUCKTRAP_IMAGE"):
+            cfg.decoy_image_path = Path(v).expanduser()
         if v := os.environ.get("DUCKTRAP_NO_LOCK"):
             cfg.auto_lock = v not in ("1", "true", "yes")
         return cfg

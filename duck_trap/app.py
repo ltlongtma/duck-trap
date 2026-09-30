@@ -57,13 +57,22 @@ class DuckTrapApp:
         self.root.mainloop()
 
     def _go_fullscreen(self) -> None:
-        self.root.attributes("-fullscreen", True)
+        # Che kín màn hình, bỏ thanh tiêu đề. Dùng cả overrideredirect +
+        # geometry (đáng tin trên macOS) lẫn -fullscreen.
+        self.root.overrideredirect(True)
+        self.root.geometry(f"{self._screen_w}x{self._screen_h}+0+0")
+        try:
+            self.root.attributes("-fullscreen", True)
+        except tk.TclError:
+            pass
         self.root.attributes("-topmost", True)
         try:
             self.root.config(cursor="none")
         except tk.TclError:
             pass
+        self.root.lift()
         self.root.focus_force()
+        self.root.update_idletasks()
 
     # ---- arming ------------------------------------------------------
 
@@ -86,9 +95,22 @@ class DuckTrapApp:
         self._armed = True
 
     def _show_decoy(self) -> None:
-        shot = self.cfg.capture_dir / ".decoy.png"
-        real = sysact.grab_desktop_screenshot(shot)
-        self._decoy_image = decoy.load_decoy_image(self.root, real)
+        # Thứ tự ưu tiên ảnh mồi:
+        #   1) Ảnh do mày tự chọn (--image)
+        #   2) Screenshot desktop thật (cần quyền Screen Recording)
+        #   3) Vẽ desktop giả tối giản
+        self._decoy_image = None
+        temp_shot: Optional[Path] = None
+
+        if self.cfg.decoy_image_path and self.cfg.decoy_image_path.exists():
+            self._decoy_image = decoy.load_decoy_image(
+                self.root, self.cfg.decoy_image_path
+            )
+
+        if self._decoy_image is None:
+            temp_shot = self.cfg.capture_dir / ".decoy.png"
+            real = sysact.grab_desktop_screenshot(temp_shot)
+            self._decoy_image = decoy.load_decoy_image(self.root, real)
 
         self.canvas.delete("all")
         if self._decoy_image is not None:
@@ -99,10 +121,10 @@ class DuckTrapApp:
             decoy.build_fake_desktop(
                 self.canvas, self._screen_w, self._screen_h
             )
-        # xoá file mồi tạm (ảnh đã nằm trong bộ nhớ Tk)
+        # xoá screenshot tạm (ảnh đã nằm trong bộ nhớ Tk)
         try:
-            if real and real.exists():
-                real.unlink()
+            if temp_shot and temp_shot.exists():
+                temp_shot.unlink()
         except OSError:
             pass
 
@@ -172,6 +194,7 @@ class DuckTrapApp:
             self.cfg.capture_dir,
             camera_index=self.cfg.camera_index,
             warmup_frames=self.cfg.camera_warmup_frames,
+            camera_name=self.cfg.camera_name,
         )
 
         # 2) Báo "GOTCHA" chớp nhoáng rồi khoá máy.
