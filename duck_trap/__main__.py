@@ -51,6 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Liệt kê tên các camera rồi thoát (cần imagesnap).",
     )
     p.add_argument(
+        "--test-lock", action="store_true",
+        help="Thử khoá máy ngay để kiểm tra, rồi thoát.",
+    )
+    p.add_argument(
         "--sensitivity", type=int, default=None,
         help="Ngưỡng di chuột (pixel) để tính là bị chạm. Nhỏ = nhạy hơn.",
     )
@@ -77,6 +81,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     _ensure_std_streams()
     args = build_parser().parse_args(argv)
+
+    if args.test_lock:
+        from . import system_actions
+        print("[Duck Trap] Thử khoá máy trong 2 giây…")
+        import time
+        time.sleep(2)
+        ok = system_actions.lock_screen()
+        return 0 if ok else 1
 
     if args.list_cameras:
         from .camera import list_cameras
