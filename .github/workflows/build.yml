@@ -37,11 +37,11 @@ jobs:
       - name: Đóng gói
         run: pyinstaller packaging/DuckTrap.spec --noconfirm
 
-      - name: Nén bản macOS (.app)
+      - name: Nén bản macOS (.app) bằng ditto (Archive Utility mở được)
         if: runner.os == 'macOS'
         run: |
           cd dist
-          zip -r -y DuckTrap-macOS.zip DuckTrap.app
+          ditto -c -k --sequesterRsrc --keepParent DuckTrap.app DuckTrap-macOS.zip
 
       - name: Tải lên artifact (Windows)
         if: runner.os == 'Windows'
