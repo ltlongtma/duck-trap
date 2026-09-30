@@ -77,8 +77,12 @@ class DuckTrapApp:
     # ---- arming ------------------------------------------------------
 
     def _activate_trap(self) -> None:
-        # The decoy is already shown from run(); now just anchor the pointer
-        # baseline and arm.
+        # The decoy is already shown from run(); make sure we hold focus (so a
+        # stray FocusOut doesn't fire the moment we arm), then anchor the
+        # pointer baseline and arm.
+        self.root.lift()
+        self.root.focus_force()
+        self.root.update_idletasks()
         self._baseline_pointer = self._pointer_now()
         self._start_input_listener()
         self._armed = True
@@ -129,6 +133,14 @@ class DuckTrapApp:
         self.root.bind_all("<Key>", lambda e: self._trigger("key press"))
         self.root.bind_all("<Button>", lambda e: self._trigger("mouse/touchpad"))
         self.root.bind_all("<Motion>", self._tk_motion)
+
+        # Escaping the trap counts as a trigger too. Mission Control (4-finger
+        # swipe up), switching Spaces (swipe left/right) and Cmd+Tab are
+        # swallowed by the system, so they never arrive as key/mouse events --
+        # instead our window loses focus / the app is deactivated. Treat that as
+        # someone trying to get out: snap + lock.
+        self.root.bind("<Deactivate>", lambda e: self._trigger("app switch / Mission Control"))
+        self.root.bind("<FocusOut>", lambda e: self._trigger("lost focus"))
 
         # Optional: also start a global hook (pynput) to catch input even without
         # focus. Needs Accessibility + Input Monitoring; if not granted it errors,

@@ -177,6 +177,10 @@ in `dist/`.
   live desktop screenshot, then a drawn fake desktop — shown full-screen via Tkinter.
 - **Detection**: binds Tk `<Key>` / `<Button>` / `<Motion>` on the focused
   fullscreen window (no special permission). `--global-hook` adds `pynput`.
+- **Anti-escape**: Mission Control, switching Spaces and Cmd/Alt+Tab are
+  swallowed by the OS and never arrive as key/mouse events, so Duck Trap also
+  fires on `<Deactivate>` / `<FocusOut>` — any attempt to leave the trap
+  counts as a trigger and locks the machine.
 - **Capture**: OpenCV, or `imagesnap` by camera name on macOS. Taken *before*
   locking.
 - **Lock (silent)**: macOS tries CGSession → `pmset displaysleepnow` →
