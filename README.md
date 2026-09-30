@@ -40,6 +40,22 @@ Sau khi chạy, có **4 giây đếm ngược** để mày rời tay khỏi bàn
 > Nếu không cài được `opencv-python`, dùng bản chụp ảnh của macOS:
 > `brew install imagesnap` — Duck Trap sẽ tự fallback sang nó.
 
+### Lỗi `No module named '_tkinter'`?
+
+Một số bản Python (điển hình **Homebrew `python@3.14`**) **không kèm tkinter**.
+`run.sh` sẽ tự tìm bản Python khác có sẵn tkinter và dựng lại venv. Nếu máy
+không có bản nào, cài thêm:
+
+```bash
+brew install python-tk          # hoặc đúng phiên bản: brew install python-tk@3.14
+```
+
+Hoặc ép dùng Python hệ thống của macOS (thường có sẵn tkinter):
+
+```bash
+DUCKTRAP_PYTHON=/usr/bin/python3 ./run.sh
+```
+
 ---
 
 ## Quyền cần cấp trên macOS (quan trọng)
