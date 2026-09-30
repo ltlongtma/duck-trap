@@ -33,6 +33,26 @@ The first run creates a virtualenv and installs dependencies automatically. It
 uses the bundled default decoy and the default camera. After launch there's a
 short silent grace period to step away (press **ESC** to cancel). Then it's armed.
 
+**Recommended: pick your own decoy image and camera.**
+
+```bash
+./run.sh --image <PATH_TO_YOUR_IMAGE> --camera-name "<YOUR_CAMERA_NAME>"
+```
+
+The parts in `<...>` are placeholders — **replace them with your own values**:
+
+- `<PATH_TO_YOUR_IMAGE>` — path to the image shown full-screen. Tip: take a
+  screenshot of your own desktop (`⌘⇧3`) so it looks real.
+- `<YOUR_CAMERA_NAME>` — run `./run.sh --list-cameras` first to see the exact
+  names on your machine, then paste the one you want (this avoids macOS grabbing
+  the iPhone / Continuity Camera).
+
+A filled-in example (yours will differ):
+
+```bash
+./run.sh --image ~/Desktop/trap-image.png --camera-name "MacBook Pro Camera"
+```
+
 **Test safely first (capture but don't lock):**
 
 ```bash
@@ -40,22 +60,6 @@ short silent grace period to step away (press **ESC** to cancel). Then it's arme
 ```
 
 Tap a key to "spring" the trap, then check the photo in the folder that opens.
-
-### Optional flags (all placeholders — change the values)
-
-```bash
-# Use your own decoy image instead of the bundled one:
-./run.sh --image ~/Desktop/my-screenshot.png
-
-# Pick a specific camera (macOS often defaults to the iPhone camera).
-# First list the exact names on YOUR machine:
-./run.sh --list-cameras
-# then pass the one you want, e.g.:
-./run.sh --camera-name "FaceTime HD Camera"
-```
-
-`~/Desktop/my-screenshot.png` and `"FaceTime HD Camera"` are just examples —
-use whatever path and camera name your machine reports.
 
 ---
 
