@@ -1,0 +1,9 @@
+# Bắt buộc để phát hiện chạm nhạy với touchpad khi cửa sổ không giữ focus
+pynput>=1.7
+
+# Để chụp webcam (khuyên dùng). Nếu không cài được, dùng imagesnap:
+#   brew install imagesnap
+opencv-python>=4.8
+
+# Để ảnh mồi (screenshot desktop) scale mượt full màn hình
+Pillow>=10.0
