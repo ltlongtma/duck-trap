@@ -7,3 +7,6 @@ captures/
 *.png
 .decoy.png
 .DS_Store
+
+# Keep the bundled default decoy image tracked despite *.png above.
+!duck_trap/assets/default_decoy.png

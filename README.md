@@ -57,9 +57,8 @@ Prebuilt apps are produced by GitHub Actions:
 2. Download and unzip:
    - **Windows** → `DuckTrap.exe`
    - **macOS** → `DuckTrap.app`
-3. *(Optional)* Drop an image named **`trap.png`** next to the app — it becomes
-   the full-screen decoy. Without it, the app screenshots the desktop or draws a
-   fake one.
+3. *(Optional)* A default desktop decoy ships inside the app. To use your own,
+   drop an image named **`trap.png`** next to the app and it takes over.
 4. **Double-click to run.** After a few seconds the trap arms silently.
    - First launch asks for **Camera** permission → **Allow**.
 
@@ -157,8 +156,10 @@ in `dist/`.
 
 ## How it works
 
-- **Decoy**: prefers your image (`--image` / `trap.png`), then a desktop
-  screenshot, then a drawn fake desktop — shown full-screen via Tkinter.
+- **Decoy**: prefers your image (`--image` / `trap.png`), then the bundled
+  default (`duck_trap/assets/default_decoy.png`, regenerate with
+  `python tools/make_default_decoy.py`), then a desktop screenshot, then a drawn
+  fake desktop — shown full-screen via Tkinter.
 - **Detection**: binds Tk `<Key>` / `<Button>` / `<Motion>` on the focused
   fullscreen window (no special permission). `--global-hook` adds `pynput`.
 - **Capture**: OpenCV, or `imagesnap` by camera name on macOS. Taken *before*

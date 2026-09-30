@@ -20,11 +20,14 @@ try:
 except Exception:
     pass
 
+# Bundle the default decoy image so it ships inside the app.
+decoy_datas = [("../duck_trap/assets/default_decoy.png", "duck_trap/assets")]
+
 a = Analysis(
     ["../run_ducktrap.py"],
     pathex=["."],
     binaries=cv2_binaries,
-    datas=cv2_datas,
+    datas=cv2_datas + decoy_datas,
     hiddenimports=["PIL", "PIL.Image", "PIL.ImageTk"] + cv2_hidden,
     hookspath=[],
     hooksconfig={},

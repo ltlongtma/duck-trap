@@ -20,18 +20,37 @@ def app_dir() -> Path:
     return Path.cwd()
 
 
-def find_default_decoy() -> Optional[Path]:
-    """Look for a decoy image next to the executable: trap.png / trap.jpg / ...
+def _resource_dir() -> Path:
+    """Directory bundled resources live in.
 
-    Lets a non-technical user just drop an image named 'trap.png' next to the
-    app and double-click, with no command line needed.
+    Under PyInstaller, data files are unpacked to sys._MEIPASS; otherwise they
+    sit next to this package.
+    """
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        return Path(meipass) / "duck_trap"
+    return Path(__file__).resolve().parent
+
+
+def bundled_default_decoy() -> Optional[Path]:
+    """The decoy image shipped with the app (assets/default_decoy.png)."""
+    p = _resource_dir() / "assets" / "default_decoy.png"
+    return p if p.exists() else None
+
+
+def find_default_decoy() -> Optional[Path]:
+    """Pick the decoy image when none is given on the command line.
+
+    1) A user image dropped next to the executable (trap.png / trap.jpg / ...)
+       so a non-technical user can customize it without any command line.
+    2) Otherwise the default decoy bundled with the app.
     """
     base = app_dir()
     for name in ("trap.png", "trap.jpg", "trap.jpeg", "trap.PNG", "trap.JPG"):
         p = base / name
         if p.exists():
             return p
-    return None
+    return bundled_default_decoy()
 
 
 @dataclass
