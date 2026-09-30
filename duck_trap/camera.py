@@ -1,6 +1,6 @@
-"""Chụp ảnh thủ phạm bằng webcam.
+"""Capture the intruder's photo with the webcam.
 
-Ưu tiên OpenCV. Nếu không có OpenCV, fallback sang `imagesnap` (macOS).
+Prefers OpenCV. Falls back to `imagesnap` (macOS) when OpenCV is unavailable.
 """
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ def _capture_opencv(path: Path, camera_index: int, warmup_frames: int) -> bool:
         cam.release()
         return False
     try:
-        # Bỏ vài frame đầu để webcam kịp chỉnh sáng/nét
+        # Discard the first few frames so the webcam can adjust exposure/focus.
         frame = None
         for _ in range(max(1, warmup_frames)):
             ok, f = cam.read()
@@ -45,11 +45,11 @@ def _capture_opencv(path: Path, camera_index: int, warmup_frames: int) -> bool:
 
 
 def _capture_imagesnap(path: Path, device_name: Optional[str] = None) -> bool:
-    """macOS: brew install imagesnap. Chọn camera theo tên nếu có."""
+    """macOS: brew install imagesnap. Selects the camera by name if given."""
     exe = shutil.which("imagesnap")
     if not exe:
         return False
-    cmd = [exe, "-w", "1"]  # -w: chờ camera chỉnh sáng ~1s cho ảnh không tối
+    cmd = [exe, "-w", "1"]  # -w: warm up ~1s so the shot is not dark
     if device_name:
         cmd += ["-d", device_name]
     cmd.append(str(path))
@@ -61,7 +61,7 @@ def _capture_imagesnap(path: Path, device_name: Optional[str] = None) -> bool:
 
 
 def list_cameras() -> list[str]:
-    """Liệt kê tên các camera macOS qua imagesnap (nếu có)."""
+    """List macOS camera names via imagesnap (if installed)."""
     exe = shutil.which("imagesnap")
     if not exe:
         return []
@@ -74,7 +74,7 @@ def list_cameras() -> list[str]:
     names: list[str] = []
     for line in out.splitlines():
         line = line.strip()
-        # imagesnap in dạng: "=> FaceTime HD Camera" hoặc "FaceTime HD Camera"
+        # imagesnap prints "=> FaceTime HD Camera" or "FaceTime HD Camera".
         if not line or line.lower().startswith("video devices"):
             continue
         names.append(line.lstrip("=> ").strip())
@@ -87,17 +87,17 @@ def capture_snapshot(
     warmup_frames: int = 5,
     camera_name: Optional[str] = None,
 ) -> Optional[Path]:
-    """Chụp 1 ảnh, trả về đường dẫn nếu thành công, None nếu thất bại.
+    """Take one photo; return its path on success, None on failure.
 
-    Nếu chỉ định camera_name (macOS) thì ưu tiên chụp bằng imagesnap theo
-    tên đó để tránh bị vớ nhầm camera iPhone (Continuity Camera).
+    If camera_name is given (macOS), prefer capturing with imagesnap by that
+    name to avoid grabbing the iPhone camera (Continuity Camera).
     """
     path = _timestamped_path(capture_dir)
 
     if camera_name:
         if _capture_imagesnap(path, device_name=camera_name):
             return path
-        # imagesnap fail -> vẫn thử OpenCV theo index cho chắc
+        # imagesnap failed -> still try OpenCV by index as a fallback.
         if _capture_opencv(path, camera_index, warmup_frames):
             return path
         return None

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Đóng gói Duck Trap thành DuckTrap.app (chạy trên máy Mac).
+# Build Duck Trap into DuckTrap.app (run on a Mac).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -9,6 +9,6 @@ python3 -m PyInstaller packaging/DuckTrap.spec --noconfirm
 
 echo
 echo "==============================================="
-echo " Xong! App nằm ở: dist/DuckTrap.app"
-echo " Double-click để chạy. Lần đầu macOS hỏi quyền Camera -> Allow."
+echo " Done! App is at: dist/DuckTrap.app"
+echo " Double-click to run. On first launch macOS asks for Camera -> Allow."
 echo "==============================================="

@@ -1,168 +1,174 @@
 # 🦆 Duck Trap
 
-Bẫy tóm những kẻ hay đi **"duck" máy** người khác (rời máy quên khoá → bị người
-khác vào nhắn "duck" lên channel).
+Catch whoever messes with your unlocked machine.
 
-Ý tưởng: mày rời máy, bật Duck Trap. Màn hình trông **y như desktop đang mở
-bình thường** (thực chất là ảnh mồi full màn hình). Ngay khi có kẻ **bấm phím
-hoặc chạm touchpad/chuột**, chương trình sẽ **âm thầm**:
+## About
 
-1. 📸 Chụp một tấm ảnh thủ phạm bằng webcam.
-2. 🔒 Khoá máy ngay lập tức.
+At many offices there's a running joke: if you leave your computer unlocked,
+anyone can walk up and post "duck" (or worse) to the team chat. **Duck Trap**
+turns the tables. You leave your desk and arm it — the screen looks like your
+normal desktop, but the moment someone **presses a key or touches the
+trackpad**, Duck Trap **silently**:
 
-**Không** báo hiệu, **không** đổi màn hình, **không** tiếng động — thủ phạm chỉ
-thấy máy "tự khoá" như bình thường, không biết là đã bị chụp. Ảnh lưu **chỉ ở
-máy mày** trong thư mục `DuckTrap/captures`.
+1. 📸 Snaps a photo of them with the webcam.
+2. 🔒 Locks the machine immediately.
 
-Hỗ trợ **macOS** và **Windows**.
+No banner, no sound, no screen change — the intruder just sees the machine
+"lock itself" and never knows they were photographed. Photos are saved **only
+on your machine**, in `DuckTrap/captures`.
 
----
-
-## Cách 1 — Dùng file chạy sẵn (cho người non-tech, khỏi cài Python)
-
-1. Vào tab **Actions** của repo trên GitHub → chọn **Build Duck Trap** →
-   **Run workflow**. Đợi vài phút cho nó build xong.
-   *(Hoặc nếu có bản Release thì vào mục **Releases** tải trực tiếp.)*
-2. Tải file về:
-   - **Windows**: `DuckTrap-Windows` → giải nén ra `DuckTrap.exe`
-   - **macOS**: `DuckTrap-macOS` → giải nén ra `DuckTrap.app`
-3. *(Tuỳ chọn)* Bỏ một ảnh tên **`trap.png`** vào **cùng thư mục** với
-   `DuckTrap.exe` / `DuckTrap.app` — đó sẽ là ảnh mồi hiện full màn hình.
-   Không có thì nó tự chụp desktop hoặc vẽ desktop giả.
-4. **Double-click để chạy.** Sau vài giây là bẫy vũ trang âm thầm.
-   - Lần đầu, máy sẽ hỏi quyền **Camera** → bấm **Allow / Cho phép**.
-
-> Gợi ý ảnh mồi: chụp màn hình desktop của mày (macOS `⌘⇧3`, Windows `Win+Shift+S`)
-> rồi đổi tên thành `trap.png` đặt cạnh app cho giống thật.
-
-### Mở app lần đầu (app chưa ký số — bình thường với app nội bộ)
-
-**Windows** — SmartScreen báo "Windows protected your PC":
-*More info → Run anyway*.
-
-**macOS** — Gatekeeper báo *"Apple could not verify DuckTrap..."*. App vẫn an
-toàn, chỉ chưa mua chứng chỉ ký số. Mở bằng 1 trong 2 cách:
-
-- **Qua System Settings**: bấm **Done** (đừng Move to Trash) → mở
-  **System Settings → Privacy & Security** → kéo xuống mục Security thấy dòng
-  *"DuckTrap was blocked…"* → **Open Anyway** → xác nhận. Lần sau mở bình thường.
-- **Qua Terminal (1 lệnh)** — gỡ cờ quarantine macOS gắn cho file tải về:
-  ```bash
-  xattr -dr com.apple.quarantine ~/Downloads/DuckTrap.app
-  ```
-  (Đổi đường dẫn cho đúng chỗ để `.app`.) Xong double-click chạy bình thường.
+Works on **macOS** and **Windows**.
 
 ---
 
-## Cách 2 — Chạy từ mã nguồn (cho dev)
+## Quick start
 
-### macOS
+**Run from source (macOS), one command that just works:**
 
 ```bash
-./run.sh
+./run.sh --image ~/Desktop/trap-image.png --camera-name "MacBook Pro Camera"
 ```
 
-Lần đầu script tự tạo virtualenv + cài dependency rồi chạy. Nó tự tìm bản
-Python có **Tk ≥ 8.6** (Tk 8.5 cũ của macOS không fullscreen được) và dựng lại
-venv nếu cần.
+- `--image` — the picture shown full-screen (use a screenshot of your desktop
+  so it looks real; take one with `⌘⇧3`).
+- `--camera-name` — pick your built-in camera so it doesn't grab your iPhone
+  (Continuity Camera). Run `./run.sh --list-cameras` to see the exact names.
 
-### Windows
+The first run creates a virtualenv and installs dependencies automatically.
+After launch there's a short silent grace period to step away (press **ESC** to
+cancel). Then it's armed.
 
-```bat
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python -m duck_trap
-```
-
-### Chạy thử an toàn (không khoá máy)
+**Test safely first (capture but don't lock):**
 
 ```bash
-python -m duck_trap --no-lock --open-folder --image duong_dan_anh.png
+./run.sh --image ~/Desktop/trap-image.png --no-lock --open-folder
 ```
 
-Gõ 1 phím để "sập bẫy giả", kiểm tra ảnh trong thư mục mở ra. Ưng rồi thì bỏ
-`--no-lock` để dùng thật.
+Tap a key to "spring" the trap, then check the photo in the folder that opens.
 
 ---
 
-## Quyền cần cấp
+## Install for non-technical users (no Python)
 
-Duck Trap phát hiện chạm bằng **event của Tkinter** trên cửa sổ fullscreen đang
-giữ focus, nên **chỉ cần đúng 1 quyền bắt buộc: Camera**.
+Prebuilt apps are produced by GitHub Actions:
 
-- **macOS**: System Settings → Privacy & Security → **Camera** → bật cho app
-  (Terminal/iTerm nếu chạy mã nguồn, hoặc DuckTrap nếu chạy bản đóng gói).
-- **Windows**: Settings → Privacy → **Camera** → cho phép app dùng camera.
+1. Repo → **Actions** tab → **Build Duck Trap** → **Run workflow** (or grab the
+   files from **Releases** if a version was tagged — see below).
+2. Download and unzip:
+   - **Windows** → `DuckTrap.exe`
+   - **macOS** → `DuckTrap.app`
+3. *(Optional)* Drop an image named **`trap.png`** next to the app — it becomes
+   the full-screen decoy. Without it, the app screenshots the desktop or draws a
+   fake one.
+4. **Double-click to run.** After a few seconds the trap arms silently.
+   - First launch asks for **Camera** permission → **Allow**.
 
-Các quyền dưới đây **không bắt buộc**, chỉ khi dùng thêm:
+### First-launch security prompts (unsigned internal build)
 
-- **Accessibility + Input Monitoring** (macOS) — chỉ khi chạy `--global-hook`.
-- **Screen Recording** (macOS) — chỉ khi muốn ảnh mồi = tự chụp desktop. Không
-  cấp thì màn hình mồi sẽ xám — khi đó dùng `--image` / bỏ `trap.png` cạnh app.
+The apps aren't code-signed (fine for internal use), so:
 
----
-
-## Tuỳ chọn dòng lệnh
-
-```bash
-python -m duck_trap [tuỳ chọn]
-```
-
-| Tuỳ chọn                             | Ý nghĩa                                                     |
-|--------------------------------------|-------------------------------------------------------------|
-| `--image <đường dẫn>`                | **Ảnh mồi tự chọn** hiện full màn hình (PNG/JPG).           |
-| `--camera-name "MacBook Pro Camera"` | Chọn camera **theo tên** (tránh vớ nhầm iPhone — macOS).    |
-| `--list-cameras`                     | Liệt kê tên các camera rồi thoát.                           |
-| `--camera 1`                         | Chọn webcam theo index (dùng khi không có `--camera-name`). |
-| `--sensitivity 3`                    | Ngưỡng di chuột (pixel) tính là bị chạm. Nhỏ hơn = nhạy hơn. |
-| `--arm-delay 6`                      | Giây ân hạn im lặng trước khi vũ trang (mặc định 4).        |
-| `--global-hook`                      | Bắt input toàn cục (pynput). Cần Accessibility + Input Monitoring. |
-| `--sound`                            | Phát tiếng khi sập bẫy (mặc định **im lặng**).             |
-| `--no-lock`                          | Chỉ chụp ảnh, **không** khoá máy (dùng để test).            |
-| `--open-folder`                      | Tự mở thư mục ảnh sau khi sập bẫy.                          |
-| `--dir <đường dẫn>`                  | Đổi thư mục lưu ảnh.                                        |
-
-### Chọn đúng camera (macOS — tránh camera iPhone)
-
-macOS hay tự lấy **Continuity Camera** (iPhone). Liệt kê rồi chọn cam laptop:
-
-```bash
-./run.sh --list-cameras
-./run.sh --camera-name "MacBook Pro Camera"
-```
-
-(Cần `brew install imagesnap` để chọn theo tên.)
+- **Windows** — SmartScreen: *More info → Run anyway*.
+- **macOS** — Gatekeeper says *"Apple could not verify..."*. Either:
+  - **System Settings → Privacy & Security** → scroll to Security → **Open Anyway**, or
+  - remove the quarantine flag in Terminal:
+    ```bash
+    xattr -dr com.apple.quarantine ~/Downloads/DuckTrap.app
+    ```
 
 ---
 
-## Tự đóng gói (nếu muốn build tay)
+## Permissions
+
+Detection uses the fullscreen window's own key/mouse events, so the only
+**required** permission is **Camera**:
+
+- **macOS**: System Settings → Privacy & Security → **Camera** → enable for the
+  app (Terminal/iTerm if running from source, or DuckTrap if packaged).
+- **Windows**: Settings → Privacy → **Camera** → allow apps to use the camera.
+
+Optional:
+
+- **Accessibility** (macOS) — lets Duck Trap lock instantly via the lock
+  shortcut. Without it, locking falls back to display-sleep, which only locks if
+  **System Settings → Lock Screen → "Require password... after display is off"**
+  is set to **Immediately**.
+- **Input Monitoring** (macOS) — only for `--global-hook`.
+- **Screen Recording** (macOS) — only if you want the auto desktop-screenshot
+  decoy. Otherwise use `--image` / `trap.png`.
+
+> Running from source: macOS assigns permissions to the **terminal app** that
+> launched Python (Terminal/iTerm/VS Code), not to Python. Grant them there, and
+> quit + reopen the terminal so the new grant takes effect.
+
+---
+
+## Command-line options
+
+```bash
+python -m duck_trap [options]      # or: ./run.sh [options]
+```
+
+| Option | Meaning |
+|---|---|
+| `--image <path>` | Custom full-screen decoy image (PNG/JPG). |
+| `--camera-name "MacBook Pro Camera"` | Pick the camera by name (avoids the iPhone camera). |
+| `--list-cameras` | List camera names and exit. |
+| `--camera 1` | Pick the webcam by index (if not using `--camera-name`). |
+| `--sensitivity 3` | Mouse-move threshold in pixels. Lower = more sensitive. |
+| `--arm-delay 6` | Silent grace period before arming (default 4s). |
+| `--global-hook` | Also catch global input (needs Accessibility + Input Monitoring). |
+| `--sound` | Play a sound when triggered (default: silent). |
+| `--no-lock` | Capture only, don't lock (for testing). |
+| `--open-folder` | Open the captures folder after firing. |
+| `--test-lock` | Try locking now to verify it works, then exit. |
+| `--dir <path>` | Change where photos are saved. |
+
+Photos are saved to `~/DuckTrap/captures` (macOS/Linux) or
+`C:\Users\<you>\DuckTrap\captures` (Windows), named `duck_YYYYMMDD_HHMMSS.jpg`.
+
+---
+
+## Releases
+
+Push a version tag to build both apps and publish a downloadable Release:
+
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+GitHub Actions then attaches `DuckTrap.exe` and `DuckTrap-macOS.zip` to the
+**Releases** page. (Downloading Actions artifacts or Release assets requires
+being signed in to GitHub with access to the repo.)
+
+---
+
+## Build it yourself
 
 ```bash
 pip install pyinstaller
 pyinstaller packaging/DuckTrap.spec --noconfirm
 ```
 
-Hoặc dùng script có sẵn: `packaging/build_windows.bat` (Windows) /
-`packaging/build_macos.sh` (macOS). Kết quả nằm ở `dist/`.
+Or use `packaging/build_windows.bat` / `packaging/build_macos.sh`. Output lands
+in `dist/`.
 
 ---
 
-## Cách hoạt động (kỹ thuật)
+## How it works
 
-- **Màn hình mồi**: ưu tiên ảnh mày đưa (`--image` hoặc `trap.png`), rồi tới
-  screenshot desktop, cuối cùng vẽ desktop giả. Hiển thị full màn hình qua Tkinter.
-- **Phát hiện chạm**: bind sự kiện `<Key>` / `<Button>` / `<Motion>` của Tkinter
-  trên cửa sổ fullscreen (không cần quyền đặc biệt). Tuỳ chọn `--global-hook`
-  dùng `pynput` để bắt cả khi mất focus.
-- **Chụp ảnh**: `opencv-python`, hoặc `imagesnap` theo tên camera (macOS). Chụp
-  **trước** khi khoá máy.
-- **Khoá máy âm thầm**: macOS `CGSession -suspend` (fallback AppleScript);
-  Windows `LockWorkStation`.
+- **Decoy**: prefers your image (`--image` / `trap.png`), then a desktop
+  screenshot, then a drawn fake desktop — shown full-screen via Tkinter.
+- **Detection**: binds Tk `<Key>` / `<Button>` / `<Motion>` on the focused
+  fullscreen window (no special permission). `--global-hook` adds `pynput`.
+- **Capture**: OpenCV, or `imagesnap` by camera name on macOS. Taken *before*
+  locking.
+- **Lock (silent)**: macOS tries CGSession → `pmset displaysleepnow` →
+  AppleScript ⌃⌘Q; Windows uses `LockWorkStation`.
 
 ---
 
-## Lưu ý
+## Notes
 
-- Đây là công cụ vui trong nội bộ team, chạy trên **máy của chính mày** để
-  chống bị nghịch. Ảnh chỉ nằm ở máy mày, **không gửi đi đâu cả**.
+This is an internal, for-fun tool meant to run on **your own machine**. Photos
+stay on your machine and are never sent anywhere.

@@ -1,3 +1,3 @@
-"""Duck Trap - bẫy tóm những kẻ hay đi 'duck' máy người khác."""
+"""Duck Trap - catch people who mess with your unlocked machine."""
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"

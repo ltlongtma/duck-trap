@@ -1,4 +1,4 @@
-"""Các hành động hệ thống: khoá máy, phát tiếng, chụp màn hình nền, mở thư mục."""
+"""System actions: lock the screen, play a sound, screenshot the desktop, open folder."""
 
 from __future__ import annotations
 
@@ -24,18 +24,19 @@ def _run_ok(cmd: list[str]) -> bool:
 
 
 def lock_screen_macos() -> tuple[bool, str]:
-    """Thử lần lượt các cách khoá trên macOS. Trả về (thành_công, cách_dùng)."""
-    # 1) CGSession -suspend: về màn hình đăng nhập ngay (nếu bản macOS còn hỗ trợ).
+    """Try each macOS lock method in turn. Returns (success, method_used)."""
+    # 1) CGSession -suspend: go straight to the login window (if this macOS
+    #    version still ships it).
     if os.path.exists(_CGSESSION) and _run_ok([_CGSESSION, "-suspend"]):
         return True, "CGSession"
 
-    # 2) pmset displaysleepnow: tắt màn hình -> máy khoá NẾU đã bật 'require
-    #    password immediately after sleep'. Không cần quyền đặc biệt.
+    # 2) pmset displaysleepnow: turn the display off -> the machine locks IF
+    #    'require password immediately after sleep' is enabled. No permission.
     if shutil.which("pmset") and _run_ok(["pmset", "displaysleepnow"]):
-        return True, "pmset (cần bật 'require password immediately')"
+        return True, "pmset (needs 'require password immediately')"
 
-    # 3) Phím tắt khoá màn hình qua AppleScript (Control+Command+Q).
-    #    Cần quyền Accessibility cho app đang chạy.
+    # 3) Lock-screen shortcut via AppleScript (Control+Command+Q).
+    #    Requires Accessibility permission for the running app.
     script = (
         'tell application "System Events" to '
         'key code 12 using {control down, command down}'
@@ -47,15 +48,15 @@ def lock_screen_macos() -> tuple[bool, str]:
 
 
 def lock_screen() -> bool:
-    """Khoá máy ngay lập tức. Trả về True nếu chạy được lệnh khoá."""
+    """Lock the machine immediately. Returns True if a lock command ran."""
     if sys.platform == "darwin":
         ok, how = lock_screen_macos()
         if ok:
-            print(f"[Duck Trap] Đã khoá máy bằng: {how}")
+            print(f"[Duck Trap] Locked the machine via: {how}")
         else:
-            print("[Duck Trap] ⚠️  KHÔNG khoá được máy. Thử cấp quyền "
-                  "Accessibility cho app, hoặc bật 'Require password "
-                  "immediately after sleep' trong System Settings.")
+            print("[Duck Trap] WARNING: could not lock the machine. Try granting "
+                  "Accessibility to the app, or enable 'Require password "
+                  "immediately after sleep' in System Settings.")
         return ok
 
     if sys.platform.startswith("linux"):
@@ -75,7 +76,7 @@ def lock_screen() -> bool:
 
 
 def play_alarm() -> None:
-    """Phát 1 tiếng để mày (hoặc thủ phạm) biết bẫy vừa sập. Không chặn lâu."""
+    """Play a short sound so the trap firing is audible. Non-blocking."""
     try:
         if sys.platform == "darwin":
             subprocess.Popen(
@@ -94,16 +95,16 @@ def play_alarm() -> None:
 
 
 def grab_desktop_screenshot(dest: Path) -> Optional[Path]:
-    """Chụp màn hình nền hiện tại (im lặng) để làm ảnh mồi trông y như thật.
+    """Silently screenshot the current desktop to use as a realistic decoy.
 
-    Chỉ hỗ trợ macOS (`screencapture`). Nền tảng khác trả về None và
-    app sẽ dùng ảnh mồi giả lập.
+    macOS only (`screencapture`). On other platforms returns None and the app
+    falls back to a synthetic decoy.
     """
     if sys.platform != "darwin":
         return None
     try:
-        # -x: không phát tiếng chụp màn hình. Nuốt stderr để khỏi rác terminal
-        # khi thiếu quyền Screen Recording (khi đó trả None -> dùng desktop giả).
+        # -x: no screenshot sound. Swallow stderr to avoid noise when Screen
+        # Recording is denied (returns None -> app uses the fake desktop).
         subprocess.run(
             ["screencapture", "-x", str(dest)],
             check=True, timeout=10, capture_output=True,

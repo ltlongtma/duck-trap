@@ -1,4 +1,4 @@
-"""Entry point cho bản đóng gói (PyInstaller)."""
+"""Entry point for the packaged build (PyInstaller)."""
 
 import sys
 

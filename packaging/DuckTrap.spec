@@ -1,10 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
-"""PyInstaller spec cho Duck Trap (chạy trên Windows lẫn macOS).
+"""PyInstaller spec for Duck Trap (Windows and macOS).
 
 Build:
     pip install pyinstaller
     pyinstaller packaging/DuckTrap.spec --noconfirm
-Kết quả nằm ở dist/DuckTrap.exe (Windows) hoặc dist/DuckTrap.app (macOS).
+Output: dist/DuckTrap.exe (Windows) or dist/DuckTrap.app (macOS).
 """
 
 import sys
@@ -13,7 +13,7 @@ from PyInstaller.utils.hooks import collect_all
 
 block_cipher = None
 
-# Thu gom đầy đủ opencv (cv2) để khỏi thiếu binary khi chạy bản đóng gói.
+# Collect all of opencv (cv2) so no binary is missing in the packaged build.
 cv2_datas, cv2_binaries, cv2_hidden = [], [], []
 try:
     cv2_datas, cv2_binaries, cv2_hidden = collect_all("cv2")
@@ -52,7 +52,7 @@ exe = EXE(
     upx=True,
     upx_exclude=[],
     runtime_tmpdir=None,
-    # windowed = không hiện cửa sổ console -> chạy âm thầm.
+    # windowed = no console window -> runs silently.
     console=False,
     disable_windowed_traceback=False,
     target_arch=None,
@@ -61,8 +61,8 @@ exe = EXE(
     icon=None,
 )
 
-# Trên macOS: bọc thành .app và khai báo lý do dùng Camera, nếu không macOS
-# sẽ chặn camera âm thầm.
+# macOS: wrap into a .app and declare the Camera usage reason, otherwise
+# macOS silently blocks the camera.
 if sys.platform == "darwin":
     app = BUNDLE(
         exe,
@@ -71,8 +71,8 @@ if sys.platform == "darwin":
         bundle_identifier="com.ducktrap.app",
         info_plist={
             "NSCameraUsageDescription":
-                "Duck Trap chụp ảnh khi có người chạm vào máy đang khoá bẫy.",
-            "LSUIElement": True,  # không hiện icon trên Dock
+                "Duck Trap takes a photo when someone touches the trapped machine.",
+            "LSUIElement": True,  # do not show a Dock icon
             "CFBundleName": "DuckTrap",
             "CFBundleDisplayName": "Duck Trap",
         },

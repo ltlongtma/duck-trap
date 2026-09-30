@@ -1,9 +1,10 @@
-# Bắt buộc để phát hiện chạm nhạy với touchpad khi cửa sổ không giữ focus
+# Optional: global input hook that catches input even without window focus
+# (only used with --global-hook)
 pynput>=1.7
 
-# Để chụp webcam (khuyên dùng). Nếu không cài được, dùng imagesnap:
+# Webcam capture (recommended). If it won't install, use imagesnap instead:
 #   brew install imagesnap
 opencv-python>=4.8
 
-# Để ảnh mồi (screenshot desktop) scale mượt full màn hình
+# Scales the decoy image smoothly to full screen
 Pillow>=10.0

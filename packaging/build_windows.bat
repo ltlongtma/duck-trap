@@ -1,6 +1,6 @@
 @echo off
-REM Đóng gói Duck Trap thành DuckTrap.exe (chạy trên máy Windows).
-REM Cần Python 3.10+ đã cài. Double-click file này hoặc chạy trong cmd.
+REM Build Duck Trap into DuckTrap.exe (run on a Windows machine).
+REM Requires Python 3.10+ installed. Double-click this file or run it in cmd.
 
 cd /d "%~dp0\.."
 
@@ -10,7 +10,7 @@ pyinstaller packaging\DuckTrap.spec --noconfirm
 
 echo.
 echo ===============================================
-echo  Xong! File nam o: dist\DuckTrap.exe
-echo  Copy DuckTrap.exe (va anh trap.png neu muon) di dung.
+echo  Done! File is at: dist\DuckTrap.exe
+echo  Copy DuckTrap.exe (and an optional trap.png) to use it.
 echo ===============================================
 pause
