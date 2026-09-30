@@ -3,12 +3,34 @@
 from __future__ import annotations
 
 import os
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
 
 DEFAULT_CAPTURE_DIR = Path.home() / "DuckTrap" / "captures"
+
+
+def app_dir() -> Path:
+    """Thư mục chứa file chạy (khi đóng gói bằng PyInstaller) hoặc cwd."""
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path.cwd()
+
+
+def find_default_decoy() -> Optional[Path]:
+    """Tự tìm ảnh mồi đặt cạnh file chạy: trap.png / trap.jpg / trap.jpeg.
+
+    Giúp người non-tech chỉ cần bỏ 1 ảnh tên 'trap.png' cạnh app rồi
+    double-click, khỏi cần gõ lệnh.
+    """
+    base = app_dir()
+    for name in ("trap.png", "trap.jpg", "trap.jpeg", "trap.PNG", "trap.JPG"):
+        p = base / name
+        if p.exists():
+            return p
+    return None
 
 
 @dataclass
@@ -46,8 +68,9 @@ class Config:
     # Có tự khoá máy sau khi chụp không
     auto_lock: bool = True
 
-    # Có phát tiếng "bíp" khi sập bẫy không
-    play_sound: bool = True
+    # Có phát tiếng khi sập bẫy không. Mặc định TẮT để chạy hoàn toàn âm thầm
+    # (thủ phạm không biết mình bị bẫy).
+    play_sound: bool = False
 
     # Có tự mở thư mục ảnh sau khi sập bẫy không (để mày xem ngay)
     open_folder_after: bool = False

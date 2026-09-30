@@ -39,21 +39,17 @@ class DuckTrapApp:
         )
         self.canvas.pack(fill="both", expand=True)
 
-        self._status_text = self.canvas.create_text(
-            self._screen_w // 2,
-            self._screen_h // 2,
-            text="",
-            fill="#ffffff",
-            font=("Helvetica", 42, "bold"),
-        )
-
     # ---- vòng đời ----------------------------------------------------
 
     def run(self) -> None:
         self._go_fullscreen()
-        # Cho phép ESC thoát trong lúc còn đếm ngược (chỉ mày biết).
+        # Hiện ảnh mồi NGAY để trông như màn hình bình thường (không countdown).
+        self._show_decoy()
+        # ESC chỉ để CHỦ MÁY huỷ trong khoảng ân hạn im lặng trước khi vũ trang.
         self.root.bind("<Escape>", lambda e: self._abort())
-        self.root.after(100, self._arm_countdown, self.cfg.arm_delay)
+        # Ân hạn im lặng: đủ để chủ máy rời tay, tránh tự sập bẫy vì cú bấm/di
+        # chuột lúc khởi động. KHÔNG hiển thị gì cả.
+        self.root.after(int(self.cfg.arm_delay * 1000), self._activate_trap)
         self.root.mainloop()
 
     def _go_fullscreen(self) -> None:
@@ -80,20 +76,8 @@ class DuckTrapApp:
 
     # ---- arming ------------------------------------------------------
 
-    def _arm_countdown(self, remaining: float) -> None:
-        if remaining > 0:
-            secs = int(remaining + 0.999)
-            self.canvas.itemconfigure(
-                self._status_text,
-                text=f"Duck Trap sẽ vũ trang sau {secs}…\n(ESC để huỷ)",
-            )
-            self.root.after(200, self._arm_countdown, remaining - 0.2)
-            return
-        self._activate_trap()
-
     def _activate_trap(self) -> None:
-        # Chụp desktop thật để làm ảnh mồi, rồi hiển thị full màn hình.
-        self._show_decoy()
+        # Ảnh mồi đã hiện sẵn từ run(); giờ chỉ chốt mốc chuột rồi vũ trang.
         self._baseline_pointer = self._pointer_now()
         self._start_input_listener()
         self._armed = True
@@ -208,7 +192,7 @@ class DuckTrapApp:
         if self.cfg.play_sound:
             sysact.play_alarm()
 
-        # 1) CHỤP ẢNH thủ phạm TRƯỚC khi khoá (khoá xong camera có thể tắt).
+        # Chụp ảnh thủ phạm TRƯỚC khi khoá (khoá xong camera có thể tắt).
         photo = capture_snapshot(
             self.cfg.capture_dir,
             camera_index=self.cfg.camera_index,
@@ -216,24 +200,9 @@ class DuckTrapApp:
             camera_name=self.cfg.camera_name,
         )
 
-        # 2) Báo "GOTCHA" chớp nhoáng rồi khoá máy.
-        self.root.after(0, self._flash_gotcha, reason, photo)
-
-    def _flash_gotcha(self, reason: str, photo: Optional[Path]) -> None:
-        self.canvas.delete("all")
-        self.canvas.configure(bg="#7a0000")
-        msg = "🦆  GOTCHA!  🦆\nĐừng duck máy người khác nữa nhé"
-        self.canvas.create_text(
-            self._screen_w // 2,
-            self._screen_h // 2,
-            text=msg,
-            fill="#ffffff",
-            font=("Helvetica", 48, "bold"),
-            justify="center",
-        )
-        self.root.update_idletasks()
-        # Giữ màn hình đỏ ~1.2s cho thủ phạm đọc kịp rồi khoá.
-        self.root.after(1200, self._finish, photo)
+        # Khoá máy ÂM THẦM ngay: không báo, không đổi màn hình, không tiếng.
+        # Thủ phạm chỉ thấy máy "tự khoá" như bình thường.
+        self.root.after(0, self._finish, photo)
 
     def _finish(self, photo: Optional[Path]) -> None:
         if self.cfg.auto_lock:

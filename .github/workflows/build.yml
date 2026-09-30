@@ -1,0 +1,66 @@
+name: Build Duck Trap
+
+# Tự đóng gói Duck Trap thành file chạy sẵn cho Windows và macOS.
+# - Chạy tay: tab Actions -> Build Duck Trap -> Run workflow
+# - Hoặc tự chạy khi đẩy tag dạng v1.0.0 (kèm tạo Release để tải về).
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: DuckTrap-Windows
+          - os: macos-latest
+            artifact: DuckTrap-macOS
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cài dependency
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Đóng gói
+        run: pyinstaller packaging/DuckTrap.spec --noconfirm
+
+      - name: Nén bản macOS (.app)
+        if: runner.os == 'macOS'
+        run: |
+          cd dist
+          zip -r -y DuckTrap-macOS.zip DuckTrap.app
+
+      - name: Tải lên artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/DuckTrap.exe
+
+      - name: Tải lên artifact (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/DuckTrap-macOS.zip
+
+      - name: Đính kèm vào Release khi đẩy tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/DuckTrap.exe
+            dist/DuckTrap-macOS.zip

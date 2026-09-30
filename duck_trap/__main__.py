@@ -3,11 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
 from .app import DuckTrapApp
-from .config import Config
+from .config import Config, find_default_decoy
+
+
+def _ensure_std_streams() -> None:
+    """Bản đóng gói windowed không có console -> sys.stdout/err có thể là None,
+    khiến print() lỗi. Chuyển hướng về devnull cho an toàn."""
+    if sys.stdout is None:
+        sys.stdout = open(os.devnull, "w")
+    if sys.stderr is None:
+        sys.stderr = open(os.devnull, "w")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -54,8 +64,8 @@ def build_parser() -> argparse.ArgumentParser:
         help="Chỉ chụp ảnh, KHÔNG tự khoá máy (dùng để test).",
     )
     p.add_argument(
-        "--no-sound", action="store_true",
-        help="Không phát tiếng khi sập bẫy.",
+        "--sound", action="store_true",
+        help="Phát tiếng khi sập bẫy (mặc định IM LẶNG).",
     )
     p.add_argument(
         "--open-folder", action="store_true",
@@ -65,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    _ensure_std_streams()
     args = build_parser().parse_args(argv)
 
     if args.list_cameras:
@@ -83,6 +94,9 @@ def main(argv: list[str] | None = None) -> int:
         cfg.capture_dir = args.dir.expanduser()
     if args.image is not None:
         cfg.decoy_image_path = args.image.expanduser()
+    elif cfg.decoy_image_path is None:
+        # Không chỉ định ảnh -> tự tìm trap.png/jpg đặt cạnh app (non-tech).
+        cfg.decoy_image_path = find_default_decoy()
     if args.arm_delay is not None:
         cfg.arm_delay = args.arm_delay
     if args.camera is not None:
@@ -95,8 +109,8 @@ def main(argv: list[str] | None = None) -> int:
         cfg.use_global_hook = True
     if args.no_lock:
         cfg.auto_lock = False
-    if args.no_sound:
-        cfg.play_sound = False
+    if args.sound:
+        cfg.play_sound = True
     if args.open_folder:
         cfg.open_folder_after = True
 
@@ -109,7 +123,7 @@ def main(argv: list[str] | None = None) -> int:
     if cfg.decoy_image_path and cfg.decoy_image_path.exists():
         decoy_src = str(cfg.decoy_image_path)
     else:
-        decoy_src = "screenshot desktop (cần quyền Screen Recording)"
+        decoy_src = "screenshot desktop / desktop giả"
 
     cam_src = cfg.camera_name or f"index {cfg.camera_index}"
 
